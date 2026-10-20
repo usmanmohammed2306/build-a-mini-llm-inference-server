@@ -14,3 +14,10 @@ def stable_softmax(logits):
     exp_x = np.exp(logits - np.max(logits, axis=-1, keepdims=True))
     return exp_x/np.sum(exp_x, axis=-1, keepdims=True)
 
+# Step 2 - apply_temperature
+def apply_temperature(logits, temperature):
+    # TODO: scale logits by 1 / temperature; if temperature <= 0, return logits unchanged (greedy).
+    if temperature <= 0.0:
+        return logits
+    return logits / temperature
+
