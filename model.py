@@ -42,3 +42,31 @@ def top_k_filter(logits, k):
     threshold = top_values.min(axis=-1, keepdims=True)
     return np.where(logits < threshold, -np.inf, logits)
 
+# Step 4 - top_p_filter
+def top_p_filter(logits, p):
+    if not 0 < p <= 1:
+        raise ValueError("p must be in between 0 and 1")
+
+    logits = np.asarray(logits)
+    output = logits.astype(np.result_type(logits.dtype, np.float32), copy=True)
+
+    if p == 1:
+        return output
+    
+    indices = np.argsort(-output, axis=-1)
+    sorted_logits = np.take_along_axis(output, indices, axis=-1)
+
+    scores = sorted_logits.astype(np.float64)
+    weights = np.exp(scores - scores.max(axis=-1, keepdims= True))
+    probs = weights / weights.sum(axis=-1, keepdims=True)
+
+    cumulative = np.cumsum(probs, axis=-1)
+
+    remove = np.zeros_like(cumulative, dtype=bool)
+    remove[..., 1:] = cumulative[..., :-1] >= p
+
+    filtered = np.where(remove, -np.inf, sorted_logits)
+    np.put_along_axis(output, indices, filtered, axis=-1)
+
+    return output
+
